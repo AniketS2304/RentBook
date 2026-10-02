@@ -134,6 +134,7 @@ These rules are non-negotiable. Violating any of them is a bug.
 14. **Verify authorization** — manually check that cross-owner access returns 404.
 15. **Check for regressions** — run the full test suite.
 16. **Update documentation** — if behavior changed, update the relevant doc.
+17. **Commit every feature and fix** — commit immediately once an implementation passes all tests and meets the Definition of Done. Do not leave completed work uncommitted across tasks.
 
 ### Do NOT
 
@@ -147,6 +148,21 @@ These rules are non-negotiable. Violating any of them is a bug.
 - ❌ Hard-delete financial records
 - ❌ Compute rent status in multiple places or on client apps
 - ❌ Create long, multi-step forms in the UI
+
+---
+
+## Git Commit Guidelines
+
+Keep committing frequently as work progresses:
+- **Commit after every verified feature or fix**: As soon as code is tested and passes, commit immediately. Do not accumulate large batches of uncommitted files across multiple phases.
+- **Conventional commit messages**: Use standard prefixes:
+  - `feat(...)`: new functionality or phase milestone
+  - `fix(...)`: bug fix or correction
+  - `test(...)`: test addition or update
+  - `docs(...)`: documentation or architectural updates
+  - `refactor(...)`: non-behavioral cleanup
+- **Atomic commits**: Keep commits focused on the specific feature or fix.
+- **Clean working tree**: Ensure the test suite passes and the repository is committed cleanly after completing each task.
 
 ---
 
@@ -188,6 +204,7 @@ A feature is complete when:
 - [ ] Tests exist for critical behavior
 - [ ] No regression in existing tests
 - [ ] Documentation updated if behavior changed
+- [ ] Clean git commit made with a descriptive message
 
 **Read**: [docs/testing/TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md) for test specifications.
 
@@ -232,6 +249,7 @@ When assigned a task:
 8. Write/update tests
 9. Verify no regressions
 10. Update documentation if behavior changed
+11. Commit verified changes to git with a descriptive message
 ```
 
 **Never skip steps 1–5.** Understanding the context prevents unnecessary rewrites.
