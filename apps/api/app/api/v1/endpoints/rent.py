@@ -1,10 +1,15 @@
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_owner, get_db
 from app.models.owner import Owner
+from app.schemas.payment import (
+    PaymentCreate,
+    PaymentCreateResponse,
+    PaymentDetail,
+)
 from app.schemas.rent import (
     RentListResponse,
     RentRecordDetail,
@@ -12,6 +17,7 @@ from app.schemas.rent import (
     RentRecordVoidRequest,
     RentRecordVoidResponse,
 )
+from app.services.payment import payment_service
 from app.services.rent import rent_service
 
 router = APIRouter(prefix="/rent", tags=["Rent"])
@@ -80,4 +86,49 @@ def void_rent_record(
         rent_record_id=rent_record_id,
         owner_id=current_owner.id,
         data=data,
+    )
+
+
+# --- Sub-resource routes: /rent/{rent_record_id}/payments per API.md ---
+
+
+@router.post(
+    "/{rent_record_id}/payments",
+    response_model=PaymentCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record a payment against a rent record",
+)
+def record_payment(
+    rent_record_id: UUID,
+    data: PaymentCreate,
+    current_owner: Owner = Depends(get_current_owner),
+    db: Session = Depends(get_db),
+):
+    """Record a payment with validation, 2x sanity check, and status recalculation."""
+    return payment_service.record_payment(
+        db=db,
+        rent_record_id=rent_record_id,
+        owner_id=current_owner.id,
+        data=data,
+    )
+
+
+@router.get(
+    "/{rent_record_id}/payments",
+    response_model=List[PaymentDetail],
+    status_code=status.HTTP_200_OK,
+    summary="List payments for a rent record",
+)
+def list_rent_record_payments(
+    rent_record_id: UUID,
+    include_void: bool = Query(True, description="Include voided payments"),
+    current_owner: Owner = Depends(get_current_owner),
+    db: Session = Depends(get_db),
+):
+    """List all payments for a rent record. Returns 404 for cross-owner access."""
+    return payment_service.list_payments_for_rent_record(
+        db=db,
+        rent_record_id=rent_record_id,
+        owner_id=current_owner.id,
+        include_void=include_void,
     )

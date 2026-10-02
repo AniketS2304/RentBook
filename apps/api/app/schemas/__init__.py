@@ -9,6 +9,16 @@ from app.schemas.auth import (
 )
 from app.schemas.common import ErrorResponse, FieldError, HealthResponse
 from app.schemas.owner import OwnerBase, OwnerBrief, OwnerOut
+from app.schemas.payment import (
+    PaymentCreate,
+    PaymentCreateResponse,
+    PaymentDetail,
+    PaymentMethod,
+    PaymentUpdate,
+    PaymentVoidRequest,
+    PaymentVoidResponse,
+    RentRecordBriefStatus,
+)
 from app.schemas.property import (
     PropertyArchiveResponse,
     PropertyCreate,
@@ -61,6 +71,14 @@ __all__ = [
     "OwnerBase",
     "OwnerBrief",
     "OwnerOut",
+    "PaymentCreate",
+    "PaymentCreateResponse",
+    "PaymentDetail",
+    "PaymentMethod",
+    "PaymentUpdate",
+    "PaymentVoidRequest",
+    "PaymentVoidResponse",
+    "RentRecordBriefStatus",
     "PropertyArchiveResponse",
     "PropertyCreate",
     "PropertyDetail",

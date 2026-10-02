@@ -37,23 +37,34 @@ class TenantService:
 
         # Load non-void rent records for this tenant
         rent_records = rent_repo.list_by_tenant(db, tenant_id=tenant.id, include_void=False)
-        rent_history = [
-            TenantRentHistoryItem(
-                id=rr.id,
-                month=rr.month,
-                year=rr.year,
-                expected_amount_paise=rr.expected_amount_paise,
-                total_paid_paise=0,
-                due_date=rr.due_date,
-                status=calculate_rent_status(
-                    due_date=rr.due_date,
+        rent_history = []
+        for rr in rent_records:
+            valid_payments = [p for p in rr.payments if not p.is_void]
+            total_paid = sum(p.amount_paise for p in valid_payments)
+            rent_history.append(
+                TenantRentHistoryItem(
+                    id=rr.id,
+                    month=rr.month,
+                    year=rr.year,
                     expected_amount_paise=rr.expected_amount_paise,
-                    total_paid_paise=0,
-                ),
-                payments=[],
+                    total_paid_paise=total_paid,
+                    due_date=rr.due_date,
+                    status=calculate_rent_status(
+                        due_date=rr.due_date,
+                        expected_amount_paise=rr.expected_amount_paise,
+                        total_paid_paise=total_paid,
+                    ),
+                    payments=[
+                        {
+                            "id": p.id,
+                            "amount_paise": p.amount_paise,
+                            "payment_method": p.payment_method,
+                            "paid_date": p.paid_date,
+                        }
+                        for p in sorted(valid_payments, key=lambda x: (x.paid_date, x.created_at))
+                    ],
+                )
             )
-            for rr in rent_records
-        ]
 
         return TenantDetail(
             id=tenant.id,
@@ -179,10 +190,11 @@ class TenantService:
             current_rr = rent_repo.get_by_tenant_month_year(db, tenant_id=t.id, month=today.month, year=today.year)
             current_month_status = None
             if current_rr and not current_rr.is_void:
+                current_rr_paid = sum(p.amount_paise for p in current_rr.payments if not p.is_void)
                 current_month_status = calculate_rent_status(
                     due_date=current_rr.due_date,
                     expected_amount_paise=current_rr.expected_amount_paise,
-                    total_paid_paise=0,
+                    total_paid_paise=current_rr_paid,
                 )
 
             items.append(

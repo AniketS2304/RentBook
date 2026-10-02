@@ -15,6 +15,7 @@ from app.schemas.rent import (
     RentListResponse,
     RentRecordDetail,
     RentRecordListItem,
+    RentRecordPaymentItem,
     RentRecordUpdate,
     RentRecordVoidRequest,
     RentRecordVoidResponse,
@@ -27,13 +28,24 @@ class RentService:
     """Business logic for on-demand rent generation, rent records, and editing."""
 
     def _format_rent_record_detail(self, record: RentRecord) -> RentRecordDetail:
-        """Format RentRecord into RentRecordDetail with computed status."""
-        total_paid = 0  # In Phase 4, payments are not implemented yet
+        """Format RentRecord into RentRecordDetail with computed status and non-void payments."""
+        valid_payments = [p for p in record.payments if not p.is_void]
+        total_paid = sum(p.amount_paise for p in valid_payments)
         status = calculate_rent_status(
             due_date=record.due_date,
             expected_amount_paise=record.expected_amount_paise,
             total_paid_paise=total_paid,
         )
+        formatted_payments = [
+            RentRecordPaymentItem(
+                id=p.id,
+                amount_paise=p.amount_paise,
+                payment_method=p.payment_method,
+                paid_date=p.paid_date,
+                notes=p.notes,
+            )
+            for p in sorted(valid_payments, key=lambda x: (x.paid_date, x.created_at))
+        ]
         return RentRecordDetail(
             id=record.id,
             tenant_id=record.tenant_id,
@@ -50,14 +62,15 @@ class RentService:
             status=status,
             notes=record.notes,
             is_void=record.is_void,
-            payments=[],
+            payments=formatted_payments,
             created_at=record.created_at,
             updated_at=record.updated_at,
         )
 
     def _format_rent_record_list_item(self, record: RentRecord) -> RentRecordListItem:
         """Format RentRecord into RentRecordListItem for monthly list."""
-        total_paid = 0
+        valid_payments = [p for p in record.payments if not p.is_void]
+        total_paid = sum(p.amount_paise for p in valid_payments)
         status = calculate_rent_status(
             due_date=record.due_date,
             expected_amount_paise=record.expected_amount_paise,
@@ -197,7 +210,10 @@ class RentService:
 
         # Compute summary aggregations across ALL non-void records for this month
         total_expected = sum(r.expected_amount_paise for r in records)
-        total_collected = 0  # In Phase 4, payments are not implemented yet
+        total_collected = sum(
+            sum(p.amount_paise for p in r.payments if not p.is_void)
+            for r in records
+        )
         total_pending = max(0, total_expected - total_collected)
 
         paid_count = 0
