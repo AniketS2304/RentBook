@@ -73,7 +73,7 @@ A building or property owned by a user.
 - `idx_properties_owner_id` (owner_id)
 - `idx_properties_owner_active` (owner_id, archived_at) — for filtering active properties
 
-**Unique constraints**: `uq_properties_owner_name` (owner_id, name) — property names unique per owner
+**Unique constraints**: `uq_properties_owner_name` UNIQUE `(owner_id, name) WHERE archived_at IS NULL` — active property names unique per owner
 
 ---
 
@@ -97,7 +97,7 @@ A rentable unit within a property (flat, room, shop).
 **Indexes**:
 - `idx_units_property_id` (property_id)
 
-**Unique constraints**: `uq_units_property_name` (property_id, name) — unit names unique within property
+**Unique constraints**: `uq_units_property_name` UNIQUE `(property_id, name) WHERE archived_at IS NULL` — active unit names unique within property
 
 ---
 
@@ -114,7 +114,7 @@ A person renting a unit. One record per tenancy (if tenant moves, a new record i
 | email | VARCHAR(255) | NULL | Optional email |
 | move_in_date | DATE | NOT NULL | |
 | move_out_date | DATE | NULL | Set on deactivation |
-| security_deposit_paise | INTEGER | NOT NULL, DEFAULT 0 | Deposit amount in paise |
+| security_deposit_paise | INTEGER | NOT NULL, DEFAULT 0 | Informational deposit amount in paise (not counted as rent) |
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'ACTIVE', CHECK IN ('ACTIVE','INACTIVE') | |
 | notes | TEXT | NULL | |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | |

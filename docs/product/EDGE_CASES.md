@@ -6,15 +6,16 @@ These edge cases MUST be handled correctly in the MVP.
 
 ### EC-01: Tenant Joins Mid-Month
 
-**Scenario**: Priya moves into Unit 201 on October 15.
+**Scenario**: Priya moves into Unit 201 on October 15. Unit rent is ₹10,000.
 
 **Expected behavior**:
-- Owner adds Priya with move-in date Oct 15
-- For October, the owner can manually create a rent record with whatever amount they agree upon (full month, prorated, or free)
-- The system does NOT auto-prorate
-- From November onwards, full monthly rent records are generated normally
+- Owner adds Priya with `move_in_date = 2026-10-15`
+- On-demand generation creates the October rent record with the unit's monthly rent (₹10,000)
+- If the landlord agreed to a partial amount (e.g. ₹5,000 for half month), the landlord edits the October rent record expected amount to ₹5,000 (`PATCH /rent/{id}`)
+- The system does NOT attempt automated pro-rating mathematics; landlord retains full control
+- From November onwards, normal monthly rent records are generated at ₹10,000
 
-**Rationale**: Auto-proration is complex and landlords handle this differently. In a physical register, they just write the agreed amount.
+**Rationale**: In physical registers, landlords simply write down what was agreed for the broken month. Giving them an edit field replicates this exact paper register workflow without automated calculation bugs.
 
 ---
 
@@ -88,14 +89,16 @@ These edge cases MUST be handled correctly in the MVP.
 
 ---
 
-### EC-08: Multiple Payments for One Month
+### EC-08: Multiple Payments & Partial Payment Reminders
 
-**Scenario**: Tenant pays ₹4,000 on Oct 5 and ₹4,000 on Oct 10 (split payment).
+**Scenario**: Unit rent is ₹8,000 due on Oct 5. Tenant pays ₹4,000 on Oct 2, and the remaining ₹4,000 on Oct 10.
 
 **Expected behavior**:
-- First payment: ₹4,000 recorded → status: PARTIALLY_PAID (if past due date) or PENDING (if before due date)
-- Second payment: ₹4,000 recorded → total = ₹8,000 → status: PAID
-- Both payments are visible in the rent record's payment history
+- Oct 2 (before due date): First payment ₹4,000 recorded → status is `PARTIALLY_PAID`
+- Oct 6 (due date passed): Status transitions to `OVERDUE` (due date passed with ₹4,000 unpaid balance)
+- Owner sends WhatsApp reminder: Message accurately requests the **remaining balance of ₹4,000**, NOT the original ₹8,000
+- Oct 10: Second payment ₹4,000 recorded → total paid = ₹8,000 → status transitions to `PAID`
+- Both payments are preserved in the rent record's payment list
 
 ---
 
@@ -173,7 +176,7 @@ These edge cases MUST be handled correctly in the MVP.
 ---
 
 ### EC-15: Timezone — IST Assumption
-
+ 
 **Scenario**: All due date calculations.
 
 **Expected behavior**:
@@ -181,6 +184,44 @@ These edge cases MUST be handled correctly in the MVP.
 - "Today" is determined by IST
 - Due date comparisons use IST date, not UTC
 - This is acceptable because the target market is Indian landlords
+
+---
+
+### EC-16: Advance Payment for Upcoming Month
+
+**Scenario**: Tenant pays November 2026 rent in late October.
+
+**Expected behavior**:
+- Owner navigates to November in the Rent tab (`/rent?month=11&year=2026`)
+- On-demand generation creates November rent records for active tenants
+- Owner opens the tenant's November record and records the payment
+- November status becomes `PAID` in advance
+- October records remain untouched
+
+---
+
+### EC-17: Tenant Leaves with Pending Rent (Late Settlement)
+
+**Scenario**: Tenant Deepak moves out on Oct 31 owing ₹5,000 for October.
+
+**Expected behavior**:
+- Owner marks Deepak as `INACTIVE` (unit becomes `VACANT`)
+- Deepak's October rent record remains preserved and marked `OVERDUE`
+- On Nov 15, Deepak transfers the pending ₹5,000 via UPI
+- Owner navigates to Deepak's profile or October rent history, and records the ₹5,000 payment
+- October rent record transitions to `PAID`
+- System allows recording payments on inactive tenant rent records (BR-PAY-10)
+
+---
+
+### EC-18: Security Deposit Separation from Rent
+
+**Scenario**: Tenant pays ₹16,000 security deposit upon moving in.
+
+**Expected behavior**:
+- Security deposit is recorded on the tenant record as informational data
+- Dashboard expected rent for the month is based solely on monthly unit rents (not deposit)
+- Deposit money does not affect rent collection percentages, pending amounts, or overdue lists
 
 ---
 

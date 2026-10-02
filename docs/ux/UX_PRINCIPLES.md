@@ -76,7 +76,8 @@ The most frequent actions must be the fastest:
 | Paid / Success | Green (#22C55E) | Paid status, collected amount |
 | Overdue / Alert | Red (#EF4444) | Overdue status, urgent items |
 | Due / Warning | Amber (#F59E0B) | Due today, pending items |
-| Vacant | Gray (#9CA3AF) | Vacant units, inactive |
+| Partially Paid | Yellow/Amber (#EAB308) | Partial payment received (balance pending) |
+| Vacant / Inactive | Gray (#9CA3AF) | Vacant units, inactive records |
 | Primary Action | Blue (#3B82F6) | CTA buttons, links |
 | Background | Neutral (#F9FAFB / #FFFFFF) | Page backgrounds |
 
@@ -91,11 +92,12 @@ The most frequent actions must be the fastest:
 ### Status Indicators
 
 ```
-● PAID        → Green badge/chip
-● DUE         → Amber badge/chip  
-● OVERDUE     → Red badge/chip
-● PENDING     → Gray badge/chip
-● VACANT      → Gray outline badge
+● PAID           → Green badge/chip
+● PARTIALLY PAID → Amber/Yellow badge/chip (shows remaining balance)
+● DUE            → Amber badge/chip  
+● OVERDUE        → Red badge/chip
+● PENDING        → Gray badge/chip
+● VACANT         → Gray outline badge
 ```
 
 ### Cards & Lists

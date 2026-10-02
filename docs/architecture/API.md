@@ -213,7 +213,7 @@ Partial update. Only provided fields are changed.
 
 ### DELETE /api/v1/properties/{property_id}
 
-Archives the property (soft delete). Returns 409 Conflict if property has financial data and cannot be permanently deleted.
+Archives the property (soft delete by setting `archived_at`). All historical unit, tenant, and rent data is preserved. Archived properties are excluded from active listings by default.
 
 **Response** (200 OK):
 ```json
@@ -480,15 +480,16 @@ Record a payment against a rent record.
   "amount_paise": 800000,
   "payment_method": "CASH",
   "paid_date": "2026-10-05",
-  "notes": ""
+  "notes": "",
+  "confirm_excess": false
 }
 ```
 
 **Validation**:
 - `amount_paise`: Required, > 0
-- `payment_method`: Required, one of CASH/UPI/BANK_TRANSFER/OTHER
-- `paid_date`: Required, not in the future
-- Sanity check: warn if total payments would exceed 2x expected amount
+- `payment_method`: Required, one of `CASH`, `UPI`, `BANK_TRANSFER`, `OTHER`
+- `paid_date`: Required, valid date, cannot be in the future
+- `confirm_excess`: Optional boolean (default: false). If total payments after this transaction would exceed 2x `expected_amount_paise` and `confirm_excess` is false, returns `422 Unprocessable Entity` with code `EXCESSIVE_AMOUNT_WARNING`. When `confirm_excess` is true, the payment is recorded with landlord confirmation.
 
 **Response** (201 Created):
 ```json
@@ -593,44 +594,46 @@ Void a payment.
 
 ## Reminders
 
-### POST /api/v1/tenants/{tenant_id}/reminders
+### POST /api/v1/rent/{rent_record_id}/reminders
 
-Generate and record a reminder.
+Generate and record a tenant reminder for a specific rent obligation. (Also aliased as `POST /api/v1/tenants/{tenant_id}/reminders` with `rent_record_id` in body for backwards compatibility).
 
 **Request**:
 ```json
-{
-  "rent_record_id": "uuid"
-}
+{}
 ```
 
 **Validation**:
-- Rent must be DUE or OVERDUE
-- Cooldown: at least 24 hours since last reminder for this rent record
+- Rent record must have an unpaid balance (`total_paid_paise < expected_amount_paise`)
+- Rent status must be DUE or OVERDUE (`today >= due_date`)
+- Cooldown: at least 24 hours since last reminder for this rent record (returns `429 Too Many Requests` or `400 Bad Request` with code `REMINDER_COOLDOWN_ACTIVE` if cooldown is active)
 
 **Response** (200 OK):
 ```json
 {
   "whatsapp_url": "https://wa.me/919876543210?text=Hi%20Suresh%2C%20your%20monthly%20rent...",
   "message": "Hi Suresh, your monthly rent of ₹15,000 for October 2026 was due on 1 October. Please make the payment at the earliest. Thank you.",
+  "remaining_amount_paise": 1500000,
   "sent_at": "2026-10-02T17:30:00Z"
 }
 ```
+
+*Note*: If partial payment has already been recorded, `message` automatically uses the remaining balance amount (e.g. "remaining rent balance of ₹5,000").
 
 ---
 
 ## Authorization Rules
 
-Every endpoint (except auth) enforces:
+Every endpoint (except `/auth/*`) enforces:
 
-1. Valid JWT token present
-2. owner_id extracted from token
-3. Requested resource belongs to the authenticated owner (traced through property → owner_id)
-4. If not → 403 Forbidden
+1. Valid JWT token present in `Authorization: Bearer <token>`
+2. `owner_id` extracted from JWT claims (never trusted from request body)
+3. Requested resource must belong to the authenticated owner (traced through property → `owner_id`)
+4. If resource does not exist OR belongs to another owner → **404 Not Found** (prevents resource existence leakage)
 
 ```json
 {
-  "detail": "You do not have access to this resource",
-  "code": "FORBIDDEN"
+  "detail": "Resource not found",
+  "code": "NOT_FOUND"
 }
 ```

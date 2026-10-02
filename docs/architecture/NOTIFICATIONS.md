@@ -24,21 +24,27 @@ https://wa.me/919876543210?text=Hi%20Rahul%2C%20your%20monthly%20rent%20of%20%E2
 
 ### Message Templates
 
-#### Before/On Due Date
+#### Before/On Due Date (No Payment Made)
 ```
 Hi {tenant_name}, your monthly rent of ₹{amount} for {month} {year} is due on {due_date}. Please make the payment by the due date. Thank you.
 ```
 
-#### After Due Date (Overdue)
+#### After Due Date (Overdue - No Payment Made)
 ```
 Hi {tenant_name}, your monthly rent of ₹{amount} for {month} {year} was due on {due_date}. Please make the payment at the earliest. Thank you.
+```
+
+#### Partial Payment Made (Remaining Balance Due/Overdue)
+```
+Hi {tenant_name}, your remaining rent balance of ₹{remaining_amount} for {month} {year} was due on {due_date}. Please clear the remaining balance at the earliest. Thank you.
 ```
 
 ### Rules
 
 | Rule | Description |
 |------|-------------|
-| Eligibility | Only tenants with DUE or OVERDUE rent |
+| Eligibility | Only rent records with an outstanding balance (`total_paid < expected_amount`) and where `today >= due_date` (DUE or OVERDUE) |
+| Accurate Balance | If partial payment exists, the reminder message explicitly mentions the remaining balance (`expected - total_paid`), not the initial total rent |
 | Cooldown | Minimum 24 hours between reminders for the same rent record |
 | Owner-initiated | System never sends messages automatically |
 | Recording | System records reminder timestamp; delivery is not guaranteed since WhatsApp is external |

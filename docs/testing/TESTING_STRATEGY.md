@@ -54,11 +54,11 @@ def test_status_paid_full_payment():
 def test_status_paid_overpayment():
     """Rent with payment > expected → PAID (not error)"""
 
-def test_status_partially_paid_after_due():
-    """Partial payment after due date → PARTIALLY_PAID"""
+def test_status_partially_paid_before_due():
+    """Partial payment before or on due date → PARTIALLY_PAID"""
 
-def test_status_pending_with_partial_before_due():
-    """Partial payment before due date → PENDING (not PARTIALLY_PAID)"""
+def test_status_overdue_with_partial_payment():
+    """Partial payment where due date has passed → OVERDUE (unpaid balance remains)"""
 
 def test_status_excludes_voided_payments():
     """Voided payments should not count toward total paid"""
@@ -220,6 +220,9 @@ def test_rent_change_does_not_affect_existing_records():
 
 def test_reminder_generates_correct_message():
     """Message includes tenant name, amount, month, due date"""
+
+def test_reminder_uses_remaining_balance_on_partial_payment():
+    """Message specifies remaining balance (not full rent) if partial payment made"""
 
 def test_reminder_generates_whatsapp_url():
     """URL is correctly formatted with phone and encoded message"""

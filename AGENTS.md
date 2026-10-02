@@ -57,14 +57,17 @@ React (Tailwind CSS)  →  FastAPI  →  PostgreSQL
 These rules are non-negotiable. Violating any of them is a bug.
 
 1. **Owner isolation**: Owner A must NEVER see Owner B's data. Every database query for user-owned data MUST filter by `owner_id`.
-2. **Rent status is computed, not stored**: Status (PENDING/DUE/OVERDUE/PAID/PARTIALLY_PAID) is calculated from `due_date`, `expected_amount`, and `SUM(payments)`. There is ONE function that computes this. Never compute status in multiple places.
-3. **Financial data is never hard-deleted**: Rent records and payments use `is_void` for cancellation. No `DELETE FROM payments` or `DELETE FROM rent_records`.
+2. **Rent status is computed, not stored**: Status (PAID/PARTIALLY_PAID/DUE/OVERDUE/PENDING) is calculated dynamically in ONE centralized function from `due_date`, `expected_amount_paise`, and `SUM(non_void_payments)`.
+3. **Financial data is never hard-deleted**: Rent records and payments use `is_void = TRUE` for cancellation. No `DELETE FROM payments` or `DELETE FROM rent_records`.
 4. **Money is stored in paise**: All monetary values are integers in paise (₹8,000 = 800000). Never use floats for money.
 5. **One active tenant per unit**: A unit can have at most one tenant with `status = 'ACTIVE'`.
-6. **Rent records are generated on-demand**: When dashboard/rent page is viewed, missing rent records are created for active tenants. No background jobs.
+6. **Rent records are generated on-demand**: When dashboard or rent page is viewed, missing rent records are created for eligible active tenants (`move_in_date <= month`). No background cron jobs.
 7. **Rent amount is snapshot**: When a rent record is created, it captures the unit's current rent. Changing the unit's rent does NOT update existing records.
-8. **Due day is 1–28**: To avoid February/month-length issues.
+8. **Due day is 1–28**: Strictly enforced to avoid month-length issues across all months.
 9. **No duplicate rent records**: Unique constraint on `(tenant_id, month, year)`.
+10. **Security deposit is strictly separate from rent**: Deposits are informational only and NEVER mixed into monthly rent expected/collected calculations.
+11. **Reminders request remaining balance**: If partial payment has occurred, the reminder message requests the remaining balance (`expected - total_paid`), not the initial full amount.
+12. **Historical debt settlement**: Deactivated (`INACTIVE`) tenants can still have payments recorded against their existing historical rent records.
 
 **Read**: [docs/product/BUSINESS_RULES.md](docs/product/BUSINESS_RULES.md) for complete rules.
 

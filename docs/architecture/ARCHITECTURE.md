@@ -72,9 +72,9 @@ Client sends request with Authorization: Bearer <JWT>
 ### Error Handling
 
 - Validation errors → 422 with field-level details
-- Not found → 404
-- Authorization failures → 403
-- Authentication failures → 401
+- Resource not found or not owned by user → 404 (prevents leaking existence)
+- Authentication failures / Missing token → 401
+- Forbidden action (e.g. account inactive) → 403
 - Server errors → 500 (logged, not exposed to client)
 
 ## Frontend Architecture

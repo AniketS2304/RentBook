@@ -45,8 +45,9 @@
 | BR-TEN-05 | Deactivating a tenant does NOT delete their rent or payment history. |
 | BR-TEN-06 | An inactive tenant's historical records remain viewable. |
 | BR-TEN-07 | The same phone number may exist for different tenants (e.g., a tenant moves to a different unit/property over time). |
-| BR-TEN-08 | Security deposit is recorded as a monetary amount. The system does not manage deposit refunds in MVP. |
+| BR-TEN-08 | Security deposit is recorded as an informational monetary amount. It is NOT considered rent and is NEVER included in monthly expected/collected rent calculations. |
 | BR-TEN-09 | A tenant cannot be assigned to an already-occupied unit. The existing tenant must be deactivated first. |
+| BR-TEN-10 | A tenant entity represents a specific tenancy. If a tenant moves to a different unit, a new tenant record is created for the new unit. |
 
 ## 5. Rent Records
 
@@ -54,50 +55,58 @@
 |------|-------------|
 | BR-RENT-01 | A rent record represents one tenant's rent obligation for one calendar month. |
 | BR-RENT-02 | There must be at most one rent record per tenant per month (unique constraint: `tenant_id` + `month` + `year`). |
-| BR-RENT-03 | Rent records are created on-demand when the owner views the current month's data (see ADR-002). |
+| BR-RENT-03 | Rent records are created on-demand when the owner views a specific month's data (see ADR-002). Only tenants whose `move_in_date` is on or before the requested month, and who were not moved out before the start of that month, are eligible. |
 | BR-RENT-04 | Rent records are only created for active tenants occupying a unit. Vacant units do not generate rent records. |
-| BR-RENT-05 | The rent amount on a record is snapshot at creation time from the unit's current monthly rent. |
+| BR-RENT-05 | The rent amount on a record is snapshot at creation time from the unit's current monthly rent. Landlords can manually adjust `expected_amount_paise` (e.g. for mid-month joins) via edit. |
 | BR-RENT-06 | Once a rent record is created, its expected amount is independent of future unit rent changes. |
-| BR-RENT-07 | Rent records should not be hard-deleted. They can be voided/cancelled with a reason if needed. |
+| BR-RENT-07 | Rent records should not be hard-deleted. They can be voided/cancelled with a reason (`is_void = TRUE`). Voided records are excluded from calculations. |
 
 ### Rent Status Rules
 
+Rent status is **computed dynamically** in a single centralized function from:
+- `expected_amount_paise`
+- `total_paid_paise` (sum of non-voided payments)
+- `due_date`
+- `today` (current date in IST)
+
 | Status | Condition |
 |--------|-----------|
-| `PENDING` | Rent record exists, due date has not arrived, no payment received. |
-| `DUE` | Due date is today, no payment received. |
-| `OVERDUE` | Due date has passed, no full payment received. |
-| `PAID` | Payment received >= expected amount. |
-| `PARTIALLY_PAID` | Payment received > 0 but < expected amount, and due date has passed. |
+| `PAID` | `total_paid >= expected_amount` (obligation fully satisfied) |
+| `PARTIALLY_PAID` | `0 < total_paid < expected_amount` AND `today <= due_date` (partial payment received, due date not passed) |
+| `OVERDUE` | `total_paid < expected_amount` AND `today > due_date` (due date passed with an unpaid balance, whether ₹0 or partial) |
+| `DUE` | `total_paid == 0` AND `today == due_date` (due today, no payment received yet) |
+| `PENDING` | `total_paid == 0` AND `today < due_date` (upcoming, due date in the future) |
 
 | Rule | Description |
 |------|-------------|
-| BR-RENT-08 | Rent status is **computed** from the rent record's due date, expected amount, and total payments received. It is not stored as a static field. |
-| BR-RENT-09 | Status computation is centralized in one function/method. Multiple inconsistent status calculations are not allowed. |
-| BR-RENT-10 | The due date for a rent record = the unit's rent_due_day within the record's month/year. |
+| BR-RENT-08 | Rent status is **computed**, not stored. It is calculated dynamically whenever rent records are queried. |
+| BR-RENT-09 | Status computation is centralized in one function. Multiple conflicting calculations are forbidden. |
+| BR-RENT-10 | The due date for a rent record = the unit's `rent_due_day` within the record's month/year (`YYYY-MM-DD`). |
+| BR-RENT-11 | Any rent record where `total_paid < expected_amount` AND `today > due_date` is classified as overdue in dashboard counts, overdue lists, and reminder triggers. |
 
 ## 6. Payments
 
 | Rule | Description |
 |------|-------------|
-| BR-PAY-01 | A payment is always linked to a rent record. |
-| BR-PAY-02 | A rent record can have multiple payments (to support partial payments and corrections). |
+| BR-PAY-01 | A payment is always linked to a specific rent record. |
+| BR-PAY-02 | A rent record can have multiple payments (to support partial payments, installments, and split payments). |
 | BR-PAY-03 | Payment amount must be > 0. |
 | BR-PAY-04 | Payment method must be one of: `CASH`, `UPI`, `BANK_TRANSFER`, `OTHER`. |
 | BR-PAY-05 | Payment date defaults to today but can be backdated (not forward-dated beyond today). |
-| BR-PAY-06 | Payments cannot be hard-deleted. They can be voided/reversed with a reason. |
-| BR-PAY-07 | Editing a payment records the update timestamp. |
-| BR-PAY-08 | Total payments for a rent record should not exceed 2x the expected rent amount (sanity check to catch errors). The owner can override this with confirmation. |
-| BR-PAY-09 | Recording a payment immediately recalculates the rent record's effective status. |
+| BR-PAY-06 | Payments cannot be hard-deleted. They can be voided (`is_void = TRUE`) with an optional reason. |
+| BR-PAY-07 | Editing a payment updates amount/method/date and records `updated_at`. |
+| BR-PAY-08 | Total payments for a rent record exceeding 2x the expected rent amount triggers a warning (`confirm_excess` required to record). |
+| BR-PAY-09 | Recording or voiding a payment immediately recalculates the rent record's effective status and dashboard totals. |
+| BR-PAY-10 | Deactivated (`INACTIVE`) tenants can still have payments recorded against their existing historical rent records (e.g. past overdue settlements). |
 
 ## 7. Reminders
 
 | Rule | Description |
 |------|-------------|
-| BR-REM-01 | Reminders are available for tenants with DUE or OVERDUE rent. |
+| BR-REM-01 | Reminders are available only for rent records with an unpaid balance where status is DUE or OVERDUE (`today >= due_date`). |
 | BR-REM-02 | Sending a reminder opens WhatsApp with a pre-filled message. The system records the reminder timestamp. |
-| BR-REM-03 | There should be a cooldown period between reminders for the same tenant (suggested: 24 hours minimum). |
-| BR-REM-04 | Reminder messages include: tenant name, rent amount, month, due date. |
+| BR-REM-03 | Cooldown: Minimum 24 hours between reminders for the same rent record. |
+| BR-REM-04 | Reminder messages include: tenant name, remaining unpaid balance (`expected - total_paid`), month, due date. |
 | BR-REM-05 | The system does not auto-send reminders. All reminders are owner-initiated. |
 
 ## 8. Dashboard
