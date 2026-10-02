@@ -2,7 +2,7 @@
 
 ## What Is RentBook?
 
-RentBook is a **digital rent register for landlords and property owners** in India. It replaces physical registers, notebooks, Excel sheets, and WhatsApp-based tracking with a simple, reliable web application.
+RentBook is a **digital rent register for landlords and property owners** in India. It replaces physical registers, notebooks, Excel sheets, and WhatsApp-based tracking with a simple, reliable, mobile-first product.
 
 ## The Problem
 
@@ -27,6 +27,16 @@ RentBook provides a **minimal digital rent register** that lets a landlord:
 4. Record payments quickly
 5. See a clear dashboard of collection status
 6. Send payment reminders to tenants
+
+## Platform & Target Clients
+
+RentBook is designed strictly as a **mobile-first product**:
+
+- **Primary Experience — Android Native App**: Built with React Native and Expo, distributed directly to early landlords as a standalone APK via EAS Build. This is where the core real-world landlord usage takes place.
+- **Secondary Experience — Mobile Web**: Built with React and Vite, specifically designed for mobile screens (primarily iPhone users accessing via Safari) and browser check-ins.
+- **Unified Backend**: A single FastAPI + PostgreSQL REST API powers both clients, guaranteeing identical business rules and zero logic duplication.
+
+This is NOT a desktop-first SaaS dashboard. Whether accessed via Android APK or iPhone Safari, the mental model is a smartphone-first digital register.
 
 ## Target User
 

@@ -18,16 +18,19 @@
 | Signing algorithm | HS256 (symmetric) for MVP; RS256 for production scale |
 | Access token expiry | 30 minutes |
 | Refresh token expiry | 7 days |
-| Token storage (frontend) | httpOnly cookie preferred; localStorage acceptable for MVP |
+| Token storage (Android App) | Hardware-backed keystore via `expo-secure-store` |
+| Token storage (Mobile Web) | `localStorage` (or `httpOnly` cookie) |
 | Token claims | `sub` (user_id), `exp`, `iat` |
 | Secret key | Environment variable, minimum 32 characters, cryptographically random |
 | Token rotation | Refresh token is single-use; new refresh token issued on refresh |
 
-### Session Security
+### Client Trust Model (Dual-Client Architecture)
 
-- Tokens are stateless (no server-side session store in MVP)
-- Refresh tokens can be revoked by changing the user's token version (future enhancement)
-- All auth endpoints are rate-limited
+> **Core Rule**: The client application (whether the Android APK or the mobile web app) is **NEVER a trusted environment**.
+
+1. **No Embedded Secrets**: Never compile backend API secret keys, database credentials, or third-party service tokens into the Android APK or web JavaScript bundles.
+2. **Identity from Token Only**: `owner_id` is extracted strictly from verified JWT claims on the server. Never accept or trust `owner_id` from client request parameters.
+3. **Backend Authorization is the Boundary**: All authorization checks happen at the repository layer in FastAPI. Client-side hiding of UI buttons is a UX convenience, never a security mechanism.
 
 ---
 
@@ -38,7 +41,7 @@
 ```
 Every data query MUST include owner_id filtering.
 
-This is NOT optional. This is NOT a frontend concern.
+This is NOT optional. This is NOT a frontend/client concern.
 This MUST be enforced at the repository/data-access layer.
 ```
 

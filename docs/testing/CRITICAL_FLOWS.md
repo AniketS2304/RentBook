@@ -138,15 +138,58 @@ This document lists the most important user flows that MUST work correctly at al
 
 ---
 
+## Flow 9: Android Standalone APK Installation & Execution
+
+**Steps**:
+1. Build standalone APK via EAS Build (`eas build -p android --profile preview/production`)
+2. Transfer APK file to a physical Android device (via WhatsApp, USB, or direct download link)
+3. Install APK on device (allowing install from unknown source if prompted)
+4. Launch RentBook app on Android
+5. Log in with registered landlord credentials
+6. Perform core operations: view dashboard, record payment, tap Remind
+
+**Verify**:
+- APK builds and packages without bundling errors
+- App launches cleanly on real Android hardware without crashes
+- API base URL resolves to remote backend (no development `localhost` or `10.0.2.2` hardcoded in build)
+- Login session persists across app close and re-launch via `expo-secure-store`
+- Android hardware/gesture back button behaves predictably across stack screens
+- WhatsApp launches natively with pre-filled message when Remind is tapped
+- Native keyboard does not obscure form submit buttons
+
+---
+
+## Flow 10: Mobile Web (iPhone Safari) Execution & Viewport Usability
+
+**Steps**:
+1. Open mobile web URL in iPhone Safari (or mobile Chrome)
+2. Log in with landlord credentials
+3. Navigate between Home, Properties, Rent, and Settings tabs
+4. Open Record Payment form and enter data
+5. Trigger a WhatsApp reminder
+6. Refresh the browser on an inner page
+
+**Verify**:
+- Application renders within mobile viewport width (360px–414px) without horizontal scrolling
+- Top notch and bottom home-indicator bars are properly padded via `env(safe-area-inset-*)`
+- Dynamic mobile toolbars do not obscure content or break layout (`100dvh` viewport handling)
+- Page refresh retains authentication state without unexpected redirect to login
+- Tap targets are comfortably accessible for touch (minimum 44x44px)
+- WhatsApp opens correctly via web deep link (`https://wa.me/...`) in a new tab/app prompt
+
+---
+
 ## Regression Checklist
 
-Before any release, verify:
+Before any release or APK build, verify:
 
 - [ ] Flow 1: New user can set up from scratch
-- [ ] Flow 2: Payment recording works end-to-end
+- [ ] Flow 2: Payment recording works end-to-end (≤ 3 taps)
 - [ ] Flow 3: Overdue tenants are correctly identified
-- [ ] Flow 4: WhatsApp reminder generates correct URL
+- [ ] Flow 4: WhatsApp reminder generates correct URL with remaining balance
 - [ ] Flow 5: Tenant replacement preserves history
-- [ ] Flow 6: Owner A cannot see Owner B's data
-- [ ] Flow 7: New month generates correct rent records
+- [ ] Flow 6: Owner A cannot see Owner B's data (404 enforced)
+- [ ] Flow 7: New month generates correct rent records on-demand
 - [ ] Flow 8: Vacant units are excluded from rent generation
+- [ ] Flow 9: Android APK installs and runs on physical Android phone
+- [ ] Flow 10: Mobile Web works on iPhone Safari with proper safe areas and session persistence

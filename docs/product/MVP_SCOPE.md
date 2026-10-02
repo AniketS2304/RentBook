@@ -109,6 +109,22 @@ No social login, no magic links, no OTP in MVP. Keep it simple.
 | Vacancy display | Shown on property detail page |
 | No rent generation | Vacant units do not generate rent records |
 
+### 10. Client Platforms (Dual-Client Scope)
+
+Both clients provide the exact same core functional workflow against the shared FastAPI backend:
+
+#### A. Android Native App (`apps/mobile` - Primary)
+- Built with React Native, Expo, TypeScript, NativeWind, Expo Router.
+- Distributed directly as a standalone APK (`RentBook.apk`) via EAS Build.
+- Features: Authentication, Dashboard, Properties/Units CRUD, Tenant CRUD & Deactivation, Rent Tracking, Payment Recording (≤ 3 taps), Payment Edit/Void, Tenant Rent History, Native WhatsApp Reminder trigger, Vacant units view, Settings/Logout.
+- Native UX: Android back button/gesture navigation, native keyboard handling, native deep-linking.
+
+#### B. Mobile Web App (`apps/web` - Secondary / iPhone Safari)
+- Built with React, Vite, TypeScript, Tailwind CSS.
+- Targeted at iPhone users opening RentBook in Safari, and browser check-ins.
+- Features: Complete parity with Android MVP workflows.
+- Mobile Web UX: Safe area padding (`env(safe-area-inset-*)`), mobile touch targets, responsive bottom navigation.
+
 ---
 
 ## What Is NOT in the MVP
@@ -117,6 +133,8 @@ No social login, no magic links, no OTP in MVP. Keep it simple.
 
 | Excluded Feature | Reason |
 |-----------------|--------|
+| iOS App Store build | iPhone users use Mobile Web in MVP; native iOS compilation is deferred to Phase 2 |
+| Google Play Store listing | Initial landlord validation uses direct APK distribution via EAS Build |
 | Online payment gateway (Razorpay, Stripe) | Complexity; landlords collect payments externally |
 | Full accounting / ledger system | Not needed for rent tracking |
 | GST / tax compliance | Out of scope for rent register |
@@ -134,7 +152,6 @@ No social login, no magic links, no OTP in MVP. Keep it simple.
 | Multi-level staff permissions | Owner-only access in MVP |
 | Complex messaging (WhatsApp API, SMS gateway) | WhatsApp deep links are sufficient |
 | Tenant-facing portal | Owner-only in MVP |
-| Mobile native app | Responsive web app is sufficient |
 | Multi-language support | English only in MVP |
 | Multi-currency support | INR only |
 | Bulk import from Excel | Future feature |
@@ -150,10 +167,10 @@ The MVP is successful when a real landlord can:
 2. ✅ Add their properties and units
 3. ✅ Add tenants to units
 4. ✅ See which rent is pending, due, or overdue for the current month
-5. ✅ Record a payment in under 10 seconds
+5. ✅ Record a payment in under 10 seconds (≤ 3 taps)
 6. ✅ View a tenant's payment history
-7. ✅ Send a WhatsApp reminder to a tenant
-8. ✅ See vacant units
-9. ✅ Access the app on their phone
+7. ✅ Send a WhatsApp reminder to a tenant with remaining balance
+8. ✅ See vacant units at a glance
+9. ✅ Install and run the Android APK on a real Android phone (or access via iPhone Safari)
 
 If these 9 things work reliably, the MVP is complete.

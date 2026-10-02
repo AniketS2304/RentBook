@@ -4,12 +4,18 @@
 
 ### How It Works
 
-1. Owner sees a tenant with DUE or OVERDUE rent
-2. Owner taps "Remind" button
-3. System generates a pre-filled WhatsApp URL
-4. WhatsApp app opens on the owner's phone with the message ready to send
-5. Owner taps Send in WhatsApp
-6. System records that a reminder was initiated
+1. Landlord sees a tenant with DUE or OVERDUE rent in either the **Android app** or **Mobile Web**.
+2. Landlord taps the "Remind" button.
+3. Client issues `POST /api/v1/rent/{id}/reminders` to FastAPI backend:
+   - Backend validates eligibility (unpaid balance, `today >= due_date`)
+   - Backend enforces 24-hour cooldown
+   - Backend records reminder audit timestamp
+   - Backend returns formatted WhatsApp URL with pre-filled message (dynamically inserting remaining balance)
+4. Client launches WhatsApp:
+   - **Android Native App**: Calls React Native `Linking.openURL(whatsapp_url)` (or `whatsapp://send?phone=...&text=...`), seamlessly switching to the WhatsApp Android app.
+   - **Mobile Web (Safari / Browser)**: Calls `window.open(whatsapp_url, '_blank')`, prompting iOS/browser to open WhatsApp.
+5. Landlord confirms by tapping "Send" in WhatsApp.
+6. Client UI shows cooldown indicator ("Reminded 2h ago").
 
 ### WhatsApp Deep Link Format
 

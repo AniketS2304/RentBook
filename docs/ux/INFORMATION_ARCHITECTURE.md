@@ -2,7 +2,7 @@
 
 ## Navigation Structure
 
-### Primary Navigation (Bottom Bar — Mobile)
+### Primary Navigation (Bottom Bar — Common to Android & Web)
 
 ```
 ┌─────────┬─────────┬─────────┬─────────┐
@@ -18,16 +18,20 @@
 | **Rent** | Monthly rent tracking | "Who has paid and who hasn't?" |
 | **More** | Settings, profile, help | "How do I manage my account?" |
 
+*Client Implementation*:
+- **Android App (`apps/mobile`)**: Native bottom tabs implemented via Expo Router (`app/(tabs)/_layout.tsx`).
+- **Mobile Web App (`apps/web`)**: Fixed bottom navigation bar with responsive mobile viewport constraints (`max-w-md mx-auto`).
+
 ### Why Not a Tenants Tab?
 
 Tenants are accessed contextually — through properties (unit → tenant) or through rent records (rent → tenant). A separate top-level Tenants tab adds navigation without adding clarity. Tenants can be listed under "More" if needed.
 
 ---
 
-## Page Hierarchy
+## Screen & Route Hierarchy (Both Clients)
 
 ```
-Dashboard (/)
+Dashboard (Home tab)
 ├── Monthly summary cards
 ├── Overdue list → [Remind] [Record Payment]
 ├── Due today list → [Remind] [Record Payment]

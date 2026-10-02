@@ -2,9 +2,14 @@
 
 ## What Is This Product?
 
-RentBook is a **digital rent register for Indian landlords**. It replaces physical notebooks, Excel sheets, and WhatsApp-based tracking with a simple web app. The core function is tracking who has paid rent, who hasn't, and who needs a reminder.
+RentBook is a **digital rent register for Indian landlords**. It replaces physical notebooks, Excel sheets, and WhatsApp-based tracking with a mobile-first digital experience:
+- **Primary Client**: Native Android application (React Native + Expo, distributed directly via APK)
+- **Secondary Client**: Responsive mobile web application (React + Vite, optimized for iPhone Safari and mobile browsers)
+- **Shared Backend**: Unified FastAPI + PostgreSQL API consumed by both clients
 
-**Read**: [docs/product/PRODUCT_CONTEXT.md](docs/product/PRODUCT_CONTEXT.md) for full context.
+The core function is tracking who has paid rent, who hasn't, and who needs a reminder.
+
+**Read**: [docs/product/PRODUCT_CONTEXT.md](docs/product/PRODUCT_CONTEXT.md) and [docs/architecture/PLATFORM_STRATEGY.md](docs/architecture/PLATFORM_STRATEGY.md) for full context.
 
 ---
 
@@ -33,22 +38,36 @@ Owner (authenticated user)
 
 ## Architecture
 
-```
-React (Tailwind CSS)  →  FastAPI  →  PostgreSQL
-     Frontend              API          Database
+```text
+React Native Android (apps/mobile) ──┐
+                                     ├── FastAPI (apps/api) ─── PostgreSQL
+React Mobile Web (apps/web) ─────────┘
 ```
 
-### Backend Layers
+### Intended Repository Structure
+
+```text
+RentBook/
+├── apps/
+│   ├── mobile/      # Android native app (React Native, Expo, TypeScript, Expo Router, NativeWind)
+│   ├── web/         # Mobile web app (React, Vite, TypeScript, Tailwind CSS, iPhone Safari focus)
+│   └── api/         # Backend REST API (FastAPI, Python, SQLAlchemy, Alembic, PostgreSQL)
+├── docs/            # Product, architecture, UX, testing documentation
+├── AGENTS.md        # Agent guidelines and system rules
+└── README.md        # Project overview and developer onboarding
+```
+
+### Backend Layers (`apps/api/`)
 
 | Layer | Purpose | Rule |
 |-------|---------|------|
 | Routes (`app/api/`) | HTTP handling | Thin — delegate to services |
-| Services (`app/services/`) | Business logic | All rules live here |
+| Services (`app/services/`) | Business logic | All rules live here (Single Source of Truth) |
 | Repositories (`app/repositories/`) | Data access | Always filter by `owner_id` |
-| Models (`app/models/`) | ORM definitions | |
-| Schemas (`app/schemas/`) | Request/response validation | |
+| Models (`app/models/`) | ORM definitions | PostgreSQL schemas via SQLAlchemy |
+| Schemas (`app/schemas/`) | Request/response validation | Pydantic v2 schemas |
 
-**Read**: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for full details.
+**Read**: [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) and [docs/architecture/PLATFORM_STRATEGY.md](docs/architecture/PLATFORM_STRATEGY.md) for full details.
 
 ---
 
@@ -102,14 +121,19 @@ These rules are non-negotiable. Violating any of them is a bug.
 7. **Validate at API boundaries** — Pydantic schemas for all request/response models.
 8. **Always filter by `owner_id`** — no exceptions for user-owned data.
 9. **Use transactions** where multiple database writes must succeed or fail together (e.g., creating a payment and updating rent status).
-10. **Handle all states in the frontend** — loading, error, empty, and success states for every data-fetching component.
+10. **Target correct client directory**:
+    - Android native changes belong in `apps/mobile/`
+    - Mobile web changes belong in `apps/web/`
+    - Backend API and business logic changes belong in `apps/api/`
+11. **Never duplicate business logic in client apps** — rent status computation, on-demand generation, and dashboard aggregations live exclusively in backend services.
+12. **Handle all states across both clients** — loading, error, empty, and success states for every data-fetching view in both Android and Web.
 
 ### After Writing Code
 
-11. **Write tests for business logic** — service layer tests at minimum.
-12. **Verify authorization** — manually check that cross-owner access returns 404.
-13. **Check for regressions** — run the full test suite.
-14. **Update documentation** — if behavior changed, update the relevant doc.
+13. **Write tests for business logic** — service layer tests at minimum.
+14. **Verify authorization** — manually check that cross-owner access returns 404.
+15. **Check for regressions** — run the full test suite.
+16. **Update documentation** — if behavior changed, update the relevant doc.
 
 ### Do NOT
 
@@ -121,7 +145,7 @@ These rules are non-negotiable. Violating any of them is a bug.
 - ❌ Skip authorization checks for convenience
 - ❌ Use floats for monetary values
 - ❌ Hard-delete financial records
-- ❌ Compute rent status in multiple places
+- ❌ Compute rent status in multiple places or on client apps
 - ❌ Create long, multi-step forms in the UI
 
 ---
@@ -180,13 +204,14 @@ A feature is complete when:
 | Edge Cases | [docs/product/EDGE_CASES.md](docs/product/EDGE_CASES.md) | Known edge cases and expected behavior |
 | Roadmap | [docs/product/ROADMAP.md](docs/product/ROADMAP.md) | Phase 1/2/3 planning |
 | Architecture | [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) | System design, layers, data flow |
+| Platform Strategy | [docs/architecture/PLATFORM_STRATEGY.md](docs/architecture/PLATFORM_STRATEGY.md) | Android APK & iPhone Safari architecture |
 | Database | [docs/architecture/DATABASE.md](docs/architecture/DATABASE.md) | Schema, tables, constraints |
 | API | [docs/architecture/API.md](docs/architecture/API.md) | Endpoints, request/response specs |
 | Security | [docs/architecture/SECURITY.md](docs/architecture/SECURITY.md) | Auth, authorization, data protection |
 | Notifications | [docs/architecture/NOTIFICATIONS.md](docs/architecture/NOTIFICATIONS.md) | Reminder strategy |
 | UX Principles | [docs/ux/UX_PRINCIPLES.md](docs/ux/UX_PRINCIPLES.md) | Design guidelines |
 | Information Architecture | [docs/ux/INFORMATION_ARCHITECTURE.md](docs/ux/INFORMATION_ARCHITECTURE.md) | Navigation, pages, layout |
-| Architecture Decisions | [docs/decisions/ADR-001-to-004.md](docs/decisions/ADR-001-to-004.md) | Key decisions with rationale |
+| Architecture Decisions | [docs/decisions/ADR-001-to-004.md](docs/decisions/ADR-001-to-004.md), [ADR-005](docs/decisions/ADR-005-platform-strategy.md) | Key architectural decisions with rationale |
 | Testing Strategy | [docs/testing/TESTING_STRATEGY.md](docs/testing/TESTING_STRATEGY.md) | Test approach and cases |
 | Critical Flows | [docs/testing/CRITICAL_FLOWS.md](docs/testing/CRITICAL_FLOWS.md) | Flows that must always work |
 

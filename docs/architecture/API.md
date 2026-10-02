@@ -3,13 +3,14 @@
 ## Conventions
 
 - **Base URL**: `/api/v1`
-- **Authentication**: Bearer JWT token in `Authorization` header (all endpoints except auth)
+- **Client Consumers**: Consumed identically by both the **Android Native App** (`apps/mobile`) and the **Mobile Web App** (`apps/web`). The API is completely client-agnostic with zero platform-specific routes.
+- **Authentication**: Bearer JWT token in `Authorization` header (`Authorization: Bearer <token>`) on all endpoints except `/auth/*`.
 - **Content-Type**: `application/json`
-- **Monetary values**: Integers in paise (₹8,000 = 800000). API accepts and returns paise. Frontend converts for display.
+- **Monetary values**: Integers in paise (₹8,000 = 800000). The API accepts and returns paise. Client apps handle rupee formatting (`₹8,000`) for display.
 - **Dates**: ISO 8601 format `YYYY-MM-DD` for dates, `YYYY-MM-DDTHH:MM:SSZ` for timestamps
 - **IDs**: UUIDs
 - **Pagination**: `?page=1&per_page=20` (default 20, max 100)
-- **Errors**: Consistent error response format
+- **Errors**: Consistent error response format across all endpoints
 
 ### Error Response Format
 

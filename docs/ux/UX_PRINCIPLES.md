@@ -38,14 +38,25 @@ The most frequent actions must be the fastest:
 | Record a payment | < 3 taps | Tenant → Record Payment → Confirm |
 | Send a reminder | < 2 taps | Remind button → WhatsApp opens |
 
-### 4. Mobile-First
+### 4. Mobile-First (Native Android & Mobile Web)
 
-- 80%+ of usage will be on mobile phones
-- All layouts designed for 360px–414px width first
-- Touch-friendly tap targets (minimum 44x44px)
-- No hover-dependent interactions
-- Bottom navigation for primary actions
-- Large text (minimum 14px body, 24px+ for monetary amounts)
+RentBook is designed from the ground up for handheld smartphone usage (360px–414px width):
+
+- **Android Native App (`apps/mobile`)**:
+  - Leverages native Expo Router tabs and stack transitions.
+  - Honors standard Android back navigation (hardware button and edge gestures).
+  - Handles keyboard avoidance natively so form inputs stay visible during data entry.
+  - Native touch feedback and fast responsiveness.
+- **Mobile Web (`apps/web`)**:
+  - Designed specifically as an iPhone/mobile browser interface (Safari and Chrome).
+  - Accounts for mobile safe areas: `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`.
+  - Uses dynamic viewport heights (`100dvh`) to prevent layout jumps when mobile address bars collapse.
+  - Eliminates hover dependencies and mobile click delays.
+- **Shared Mobile Rules**:
+  - Touch-friendly tap targets: minimum 44x44px.
+  - Fixed bottom navigation bar for high-frequency actions.
+  - Large legible numbers (24px–32px bold for monetary amounts).
+  - Clean vertical scrolling without horizontal overflows.
 
 ### 5. Forgiving
 

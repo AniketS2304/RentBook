@@ -16,7 +16,8 @@
 | WhatsApp reminder (deep link) | P1 | Planned |
 | Rent history per tenant | P0 | Planned |
 | Vacancy view | P1 | Planned |
-| Mobile-responsive UI | P0 | Planned |
+| Android Native App (React Native / Expo APK) | P0 | Planned |
+| Mobile Web App (React / Vite for Safari) | P0 | Planned |
 
 **Success metric**: 5 real landlords using the app for at least 1 full month.
 
@@ -30,6 +31,8 @@
 
 | Feature | Description |
 |---------|-------------|
+| iOS Native App | Compile iOS IPA from existing React Native / Expo codebase |
+| App Store & Play Store | Publish to Google Play Store and Apple App Store |
 | WhatsApp Business API | Automated reminders (requires business verification) |
 | SMS notifications | For tenants without WhatsApp |
 | Export to Excel/PDF | Monthly reports, payment receipts |
@@ -58,7 +61,6 @@
 | Advanced analytics | Trends, occupancy rates, revenue projections |
 | Accounting integration | Export to Tally, Zoho, etc. |
 | Hindi/regional language support | Multilingual UI |
-| Mobile native app | iOS/Android app |
 | Subscription plans | Freemium model for monetization |
 | Multi-tenant units | Shared rooms/PG accommodation |
 

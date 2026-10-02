@@ -18,15 +18,18 @@
         └─────────┘
 ```
 
-## Testing Tools
+## Testing Tools & Environments
 
-| Layer | Tool |
-|-------|------|
-| Backend unit/service | pytest |
-| Backend API | pytest + httpx (TestClient) |
-| Database | pytest + test database (PostgreSQL) |
-| Frontend | Vitest + React Testing Library |
-| E2E | Playwright (future — not required for initial MVP) |
+| Component | Tool / Environment | Focus |
+|-----------|-------------------|-------|
+| **Backend Core** (`apps/api`) | pytest + SQLAlchemy | Unit tests for pure business rules, rent status computation, and migrations |
+| **Backend API** (`apps/api`) | pytest + httpx (`TestClient`) | Endpoint contracts, Pydantic validation, status codes, owner isolation |
+| **Backend Database** (`apps/api`) | PostgreSQL test container/instance | Transaction rollback tests, partial unique constraint enforcement |
+| **Android App** (`apps/mobile`) | React Native Testing Library + Jest | Component rendering, touch events, form inputs, native back behavior |
+| **Android Device Testing** | Standalone APK on physical Android device | EAS build installation, native keyboard avoidance, WhatsApp deep-link launching |
+| **Mobile Web App** (`apps/web`) | Vitest + React Testing Library | Responsive viewport rendering, touch interactions, safe area layout |
+| **Mobile Safari Testing** | iPhone physical device / Safari responsive mode | Viewport height handling (`100dvh`), notch padding, web WhatsApp redirect |
+| **E2E Testing** | Playwright (optional Phase 2 tool) | Automated cross-browser end-to-end flows (deferred for initial MVP) |
 
 ---
 
