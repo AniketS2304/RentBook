@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, health, payments, properties, rent, tenants, units
+from app.api.v1.endpoints import auth, dashboard, health, payments, properties, rent, tenants, units
 
 api_v1_router = APIRouter()
 
@@ -24,3 +24,7 @@ api_v1_router.include_router(rent.router)
 
 # Payment endpoints
 api_v1_router.include_router(payments.router)
+
+# Dashboard endpoints
+api_v1_router.include_router(dashboard.router)
+

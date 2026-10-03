@@ -8,7 +8,15 @@ from app.schemas.auth import (
     TokenPayload,
 )
 from app.schemas.common import ErrorResponse, FieldError, HealthResponse
+from app.schemas.dashboard import (
+    DashboardDueItem,
+    DashboardOverdueItem,
+    DashboardRecentPaymentItem,
+    DashboardSummaryBreakdown,
+    DashboardSummaryResponse,
+)
 from app.schemas.owner import OwnerBase, OwnerBrief, OwnerOut
+
 from app.schemas.payment import (
     PaymentCreate,
     PaymentCreateResponse,
@@ -108,4 +116,9 @@ __all__ = [
     "UnitCreate",
     "UnitOut",
     "UnitUpdate",
+    "DashboardDueItem",
+    "DashboardOverdueItem",
+    "DashboardRecentPaymentItem",
+    "DashboardSummaryBreakdown",
+    "DashboardSummaryResponse",
 ]
