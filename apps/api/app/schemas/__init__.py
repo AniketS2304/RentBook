@@ -35,6 +35,12 @@ from app.schemas.property import (
     PropertyListResponse,
     PropertyUpdate,
 )
+from app.schemas.reminder import (
+    ReminderCreateRequest,
+    ReminderCreateResponse,
+    ReminderListItem,
+    TenantReminderCreateRequest,
+)
 from app.schemas.rent import (
     RentListResponse,
     RentRecordDetail,
@@ -121,4 +127,8 @@ __all__ = [
     "DashboardRecentPaymentItem",
     "DashboardSummaryBreakdown",
     "DashboardSummaryResponse",
+    "ReminderCreateRequest",
+    "TenantReminderCreateRequest",
+    "ReminderCreateResponse",
+    "ReminderListItem",
 ]
