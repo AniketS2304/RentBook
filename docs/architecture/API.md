@@ -97,6 +97,8 @@ Register a new owner account.
 
 ### POST /api/v1/auth/refresh
 
+Issue a new access token using a valid refresh token. On every refresh, **refresh-token rotation** occurs: the server issues a new short-lived access token (30 minutes) and rotates the refresh token (7 days). The client must replace the previous refresh token with the newly issued one.
+
 **Request**:
 ```json
 {
@@ -108,7 +110,16 @@ Register a new owner account.
 ```json
 {
   "access_token": "new_jwt_token",
+  "refresh_token": "new_rotated_refresh_token",
   "token_type": "bearer"
+}
+```
+
+**Error** (401 Unauthorized):
+```json
+{
+  "detail": "Invalid or expired refresh token",
+  "code": "INVALID_REFRESH_TOKEN"
 }
 ```
 
