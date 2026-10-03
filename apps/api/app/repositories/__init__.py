@@ -5,6 +5,7 @@ from app.repositories.payment import PaymentRepository, payment_repo
 from app.repositories.property import PropertyRepository, property_repo
 from app.repositories.reminder import ReminderRepository, reminder_repo
 from app.repositories.rent_record import RentRecordRepository, rent_repo
+from app.repositories.report import ReportRepository, report_repo
 from app.repositories.tenant import TenantRepository, tenant_repo
 from app.repositories.unit import UnitRepository, unit_repo
 
@@ -22,6 +23,8 @@ __all__ = [
     "reminder_repo",
     "RentRecordRepository",
     "rent_repo",
+    "ReportRepository",
+    "report_repo",
     "TenantRepository",
     "tenant_repo",
     "UnitRepository",

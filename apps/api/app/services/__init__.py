@@ -5,6 +5,7 @@ from app.services.property import PropertyService, property_service
 from app.services.reminder import ReminderService, reminder_service
 from app.services.rent import RentService, rent_service
 from app.services.rent_status import calculate_rent_status, get_today_ist
+from app.services.report import ReportService, report_service
 from app.services.tenant import TenantService, tenant_service
 from app.services.unit import UnitService, unit_service
 
@@ -23,6 +24,8 @@ __all__ = [
     "rent_service",
     "calculate_rent_status",
     "get_today_ist",
+    "ReportService",
+    "report_service",
     "TenantService",
     "tenant_service",
     "UnitService",

@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     properties,
     reminders,
     rent,
+    reports,
     tenants,
     units,
 )
@@ -40,5 +41,9 @@ api_v1_router.include_router(dashboard.router)
 
 # Reminders endpoints
 api_v1_router.include_router(reminders.router)
+
+# Reports endpoints
+api_v1_router.include_router(reports.router)
+
 
 

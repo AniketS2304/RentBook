@@ -41,6 +41,14 @@ from app.schemas.reminder import (
     ReminderListItem,
     TenantReminderCreateRequest,
 )
+from app.schemas.report import (
+    MonthlyReportPaymentBreakdown,
+    MonthlyReportResponse,
+    MonthlyReportSummary,
+    OutstandingSummary,
+    OutstandingTenantItem,
+)
+
 from app.schemas.rent import (
     RentListResponse,
     RentRecordDetail,
@@ -131,4 +139,9 @@ __all__ = [
     "TenantReminderCreateRequest",
     "ReminderCreateResponse",
     "ReminderListItem",
+    "MonthlyReportPaymentBreakdown",
+    "MonthlyReportResponse",
+    "MonthlyReportSummary",
+    "OutstandingSummary",
+    "OutstandingTenantItem",
 ]
