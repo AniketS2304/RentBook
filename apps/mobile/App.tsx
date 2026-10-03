@@ -14,8 +14,8 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
 import { PropertiesScreen } from './src/screens/PropertiesScreen';
+import { TenantsScreen } from './src/screens/TenantsScreen';
 import {
-  TenantsScreen,
   RentScreen,
   PaymentsScreen,
   RemindersScreen,

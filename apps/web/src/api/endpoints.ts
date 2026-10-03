@@ -85,7 +85,7 @@ export function createApiServices(client: ApiClient = defaultClient) {
       create: (data: TenantCreate) =>
         client.post<TenantDetail>('/tenants', data),
       update: (id: string, data: TenantUpdate) =>
-        client.put<TenantDetail>(`/tenants/${id}`, data),
+        client.patch<TenantDetail>(`/tenants/${id}`, data),
       deactivate: (id: string, data?: TenantDeactivateRequest) =>
         client.post<TenantDeactivateResponse>(`/tenants/${id}/deactivate`, data || {}),
     },

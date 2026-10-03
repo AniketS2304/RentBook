@@ -4,8 +4,8 @@ import { LoginPage } from './pages/Login';
 import { RegisterPage } from './pages/Register';
 import { DashboardPage } from './pages/Dashboard';
 import { PropertiesPage } from './pages/Properties';
+import { TenantsPage } from './pages/Tenants';
 import {
-  TenantsPage,
   RentPage,
   PaymentsPage,
   RemindersPage,

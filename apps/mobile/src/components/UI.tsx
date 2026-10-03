@@ -162,6 +162,7 @@ export interface InputProps {
   maxLength?: number;
   multiline?: boolean;
   numberOfLines?: number;
+  editable?: boolean;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -175,6 +176,7 @@ export const Input: React.FC<InputProps> = ({
   maxLength,
   multiline,
   numberOfLines,
+  editable = true,
 }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.inputLabel}>{label}</Text>
@@ -183,6 +185,7 @@ export const Input: React.FC<InputProps> = ({
         styles.textInput,
         Boolean(error) && styles.textInputError,
         multiline && { height: 70, textAlignVertical: 'top' },
+        !editable && { backgroundColor: '#f1f5f9', opacity: 0.7 },
       ]}
       value={value}
       onChangeText={onChangeText}
@@ -192,6 +195,7 @@ export const Input: React.FC<InputProps> = ({
       maxLength={maxLength}
       multiline={multiline}
       numberOfLines={numberOfLines}
+      editable={editable}
     />
     {error ? (
       <Text style={styles.inputErrorText}>{error}</Text>
@@ -297,12 +301,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 // ==========================================
 // Skeleton Placeholder
 // ==========================================
-export const Skeleton: React.FC<{ height?: number; width?: string | number; style?: ViewStyle }> = ({
+export const Skeleton: React.FC<{ height?: number; width?: string | number; borderRadius?: number; style?: ViewStyle }> = ({
   height = 20,
   width = '100%',
+  borderRadius = 6,
   style,
 }) => (
-  <View style={[styles.skeleton, { height, width: width as any }, style]} />
+  <View style={[styles.skeleton, { height, width: width as any, borderRadius }, style]} />
 );
 
 export const DashboardSkeleton: React.FC = () => (

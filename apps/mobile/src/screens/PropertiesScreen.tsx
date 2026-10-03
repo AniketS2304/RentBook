@@ -66,6 +66,78 @@ export const PropertiesScreen: React.FC = () => {
   const [unitDueDay, setUnitDueDay] = useState('5');
   const [unitNotes, setUnitNotes] = useState('');
 
+  // Assign Tenant from Vacant Unit
+  const [assigningUnit, setAssigningUnit] = useState<UnitOut | null>(null);
+  const [tenantName, setTenantName] = useState('');
+  const [tenantPhone, setTenantPhone] = useState('');
+  const [tenantEmail, setTenantEmail] = useState('');
+  const [tenantMoveInDate, setTenantMoveInDate] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
+  const [tenantDepositRupees, setTenantDepositRupees] = useState('0');
+  const [tenantNotes, setTenantNotes] = useState('');
+  const [tenantFormLoading, setTenantFormLoading] = useState(false);
+  const [tenantFormError, setTenantFormError] = useState<string | null>(null);
+
+  const handleOpenAssignTenant = (unit: UnitOut) => {
+    setAssigningUnit(unit);
+    setTenantName('');
+    setTenantPhone('');
+    setTenantEmail('');
+    const today = new Date();
+    setTenantMoveInDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+    setTenantDepositRupees('0');
+    setTenantNotes('');
+    setTenantFormError(null);
+  };
+
+  const handleCreateTenantForUnit = async () => {
+    if (!assigningUnit || !propertyDetail) return;
+    const nameTrimmed = tenantName.trim();
+    if (!nameTrimmed || nameTrimmed.length < 2) {
+      setTenantFormError('Tenant name must be at least 2 characters.');
+      return;
+    }
+    const phoneTrimmed = tenantPhone.trim();
+    const phoneRegex = /^(\+91[\-\s]?)?[6789]\d{9}$/;
+    if (!phoneRegex.test(phoneTrimmed)) {
+      setTenantFormError('Please enter a valid 10-digit Indian mobile number (e.g. 9876543210).');
+      return;
+    }
+    const depositNum = parseFloat(tenantDepositRupees);
+    if (isNaN(depositNum) || depositNum < 0) {
+      setTenantFormError('Deposit must be a valid non-negative amount.');
+      return;
+    }
+
+    setTenantFormLoading(true);
+    setTenantFormError(null);
+    try {
+      await api.tenants.create({
+        unit_id: assigningUnit.id,
+        name: nameTrimmed,
+        phone: phoneTrimmed,
+        email: tenantEmail.trim() || undefined,
+        move_in_date: tenantMoveInDate,
+        security_deposit_paise: Math.round(depositNum * 100),
+        notes: tenantNotes.trim() || undefined,
+      });
+      setAssigningUnit(null);
+      Alert.alert('Success', `Tenant "${nameTrimmed}" assigned to Unit ${assigningUnit.name}!`);
+      loadPropertyDetail(propertyDetail.id);
+    } catch (err: any) {
+      if (err.status === 409 || err.code === 'UNIT_OCCUPIED') {
+        setTenantFormError('This unit already has an active tenant. Refreshing...');
+        loadPropertyDetail(propertyDetail.id);
+      } else {
+        setTenantFormError(err.message || 'Failed to add tenant.');
+      }
+    } finally {
+      setTenantFormLoading(false);
+    }
+  };
+
   // Fetch properties list
   const loadProperties = useCallback(async () => {
     setLoading(true);
@@ -446,6 +518,14 @@ export const PropertiesScreen: React.FC = () => {
                             }
                           />
                           <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                            {!unit.is_occupied && (
+                              <>
+                                <TouchableOpacity onPress={() => handleOpenAssignTenant(unit)}>
+                                  <Text style={[styles.editActionText, { color: '#16a34a' }]}>+ Add Tenant</Text>
+                                </TouchableOpacity>
+                                <Text style={{ color: '#cbd5e1' }}>·</Text>
+                              </>
+                            )}
                             <TouchableOpacity onPress={() => handleOpenEditUnit(unit)}>
                               <Text style={styles.editActionText}>Edit</Text>
                             </TouchableOpacity>
@@ -825,6 +905,91 @@ export const PropertiesScreen: React.FC = () => {
         isDanger={true}
         loading={unitFormLoading}
       />
+
+      {/* ======================================================== */}
+      {/* MODAL: ASSIGN TENANT TO VACANT UNIT                      */}
+      {/* ======================================================== */}
+      <Modal
+        isOpen={Boolean(assigningUnit)}
+        onClose={() => setAssigningUnit(null)}
+        title={`Add Tenant to Unit ${assigningUnit?.name || ''}`}
+      >
+        <View style={{ gap: 12 }}>
+          {tenantFormError && (
+            <View style={{ backgroundColor: '#fef2f2', borderColor: '#fecaca', borderWidth: 1, padding: 10, borderRadius: 8 }}>
+              <Text style={{ color: '#dc2626', fontSize: 13 }}>{tenantFormError}</Text>
+            </View>
+          )}
+
+          <Input
+            label="Tenant Full Name *"
+            value={tenantName}
+            onChangeText={setTenantName}
+            placeholder="e.g. Rahul Patil"
+            editable={!tenantFormLoading}
+          />
+
+          <Input
+            label="Phone Number *"
+            value={tenantPhone}
+            onChangeText={setTenantPhone}
+            placeholder="10-digit mobile number"
+            keyboardType="phone-pad"
+            editable={!tenantFormLoading}
+          />
+
+          <Input
+            label="Email Address (Optional)"
+            value={tenantEmail}
+            onChangeText={setTenantEmail}
+            placeholder="tenant@example.com"
+            keyboardType="email-address"
+            editable={!tenantFormLoading}
+          />
+
+          <Input
+            label="Move-In Date (YYYY-MM-DD) *"
+            value={tenantMoveInDate}
+            onChangeText={setTenantMoveInDate}
+            placeholder="YYYY-MM-DD"
+            editable={!tenantFormLoading}
+          />
+
+          <Input
+            label="Security Deposit (₹)"
+            value={tenantDepositRupees}
+            onChangeText={setTenantDepositRupees}
+            placeholder="0"
+            keyboardType="numeric"
+            editable={!tenantFormLoading}
+          />
+
+          <Input
+            label="Notes (Optional)"
+            value={tenantNotes}
+            onChangeText={setTenantNotes}
+            placeholder="Identity proof, emergency contact..."
+            editable={!tenantFormLoading}
+          />
+
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <Button
+              title="Cancel"
+              variant="outline"
+              onPress={() => setAssigningUnit(null)}
+              disabled={tenantFormLoading}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title="Assign Tenant"
+              variant="primary"
+              onPress={handleCreateTenantForUnit}
+              loading={tenantFormLoading}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
