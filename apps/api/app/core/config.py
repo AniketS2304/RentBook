@@ -1,5 +1,5 @@
 from typing import List, Union
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,6 +47,15 @@ class Settings(BaseSettings):
         if isinstance(v, str) and v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql://", 1)
         return v
+
+    @model_validator(mode="after")
+    def validate_production_settings(self) -> "Settings":
+        if self.ENVIRONMENT.lower() == "production":
+            if self.SECRET_KEY == "rentbook-dev-secret-key-change-in-production-min-32-chars":
+                raise ValueError("In production, SECRET_KEY must be changed from the default development secret!")
+            if self.DEBUG:
+                raise ValueError("In production, DEBUG must be set to False!")
+        return self
 
 
 settings = Settings()

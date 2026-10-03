@@ -285,7 +285,7 @@ class TenantService:
                 code="TENANT_ALREADY_INACTIVE",
             )
 
-        move_out_date = data.move_out_date if (data and data.move_out_date) else date.today()
+        move_out_date = data.move_out_date if (data and data.move_out_date) else get_today_ist()
         if move_out_date < tenant.move_in_date:
             raise AppException(
                 status_code=400,

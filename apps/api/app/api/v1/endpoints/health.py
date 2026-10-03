@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -5,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.schemas.common import HealthResponse
 
+logger = logging.getLogger("rentbook.health")
 router = APIRouter(tags=["Health"])
 
 
@@ -15,7 +17,8 @@ def health_check(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))
     except Exception as e:
-        db_status = f"unreachable: {str(e)}"
+        logger.error("Database health check failed: %s", e)
+        db_status = "unreachable"
 
     return HealthResponse(
         status="healthy" if db_status == "connected" else "degraded",

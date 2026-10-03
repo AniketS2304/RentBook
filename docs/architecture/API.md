@@ -589,7 +589,12 @@ Void a payment.
 }
 ```
 
-**Side effect**: Triggers on-demand rent record generation for the current month (same as GET /rent).
+**Query params**:
+- `month`: Optional integer (1-12, default: current month in IST)
+- `year`: Optional integer (2020-2100, default: current year in IST)
+- `property_id`: Optional UUID filter
+
+**Side effect**: Triggers on-demand rent record generation for the specified month (same as GET /rent).
 
 ---
 
@@ -606,12 +611,15 @@ Generate and record a tenant reminder for a specific rent obligation. (Also alia
 
 **Validation**:
 - Rent record must have an unpaid balance (`total_paid_paise < expected_amount_paise`)
-- Rent status must be DUE or OVERDUE (`today >= due_date`)
-- Cooldown: at least 24 hours since last reminder for this rent record (returns `429 Too Many Requests` or `400 Bad Request` with code `REMINDER_COOLDOWN_ACTIVE` if cooldown is active)
+- Rent status must be DUE, OVERDUE, or PARTIALLY_PAID
+- Cooldown: at least 24 hours since last reminder for this rent record (returns `400 Bad Request` with code `REMINDER_COOLDOWN_ACTIVE` if cooldown is active)
 
 **Response** (200 OK):
 ```json
 {
+  "id": "uuid",
+  "tenant_id": "uuid",
+  "rent_record_id": "uuid",
   "whatsapp_url": "https://wa.me/919876543210?text=Hi%20Suresh%2C%20your%20monthly%20rent...",
   "message": "Hi Suresh, your monthly rent of ₹15,000 for October 2026 was due on 1 October. Please make the payment at the earliest. Thank you.",
   "remaining_amount_paise": 1500000,
@@ -620,6 +628,75 @@ Generate and record a tenant reminder for a specific rent obligation. (Also alia
 ```
 
 *Note*: If partial payment has already been recorded, `message` automatically uses the remaining balance amount (e.g. "remaining rent balance of ₹5,000").
+
+### GET /api/v1/rent/{rent_record_id}/reminders
+
+List reminder history recorded for a specific rent obligation.
+
+**Response** (200 OK): List of reminder records ordered newest first.
+
+### GET /api/v1/tenants/{tenant_id}/reminders
+
+List all reminder history recorded across all rent obligations for a tenant.
+
+**Response** (200 OK): List of reminder records ordered newest first.
+
+---
+
+## Reports
+
+### GET /api/v1/reports/monthly
+
+Generate read-only monthly collection report with financial aggregations, rent status counts, payment method breakdowns, and outstanding tenant lists.
+
+**Query params**:
+- `month`: Optional integer (1-12, default: current month in IST)
+- `year`: Optional integer (2020-2100, default: current year in IST)
+- `property_id`: Optional UUID filter
+
+**Response** (200 OK):
+```json
+{
+  "month": 10,
+  "year": 2026,
+  "summary": {
+    "total_expected_paise": 5000000,
+    "total_collected_paise": 3500000,
+    "total_pending_paise": 1500000,
+    "paid_count": 2,
+    "partially_paid_count": 1,
+    "due_count": 1,
+    "overdue_count": 0
+  },
+  "payment_breakdown": {
+    "cash_paise": 1500000,
+    "upi_paise": 2000000,
+    "bank_transfer_paise": 0,
+    "other_paise": 0
+  },
+  "outstanding": {
+    "total_count": 2,
+    "total_amount_paise": 1500000,
+    "tenants": [
+      {
+        "tenant_id": "uuid",
+        "tenant_name": "Ravi Kumar",
+        "property_id": "uuid",
+        "property_name": "Shree Residency",
+        "unit_id": "uuid",
+        "unit_name": "Flat 101",
+        "rent_record_id": "uuid",
+        "expected_amount_paise": 1000000,
+        "paid_amount_paise": 0,
+        "remaining_amount_paise": 1000000,
+        "status": "DUE",
+        "due_date": "2026-10-05",
+        "days_overdue": 0
+      }
+    ]
+  }
+}
+```
 
 ---
 

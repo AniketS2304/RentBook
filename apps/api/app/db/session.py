@@ -11,10 +11,21 @@ else:
     # Set connect_timeout in seconds to prevent indefinitely hanging on unreachable db
     connect_args = {"connect_timeout": 3}
 
+engine_kwargs = {
+    "connect_args": connect_args,
+}
+if not settings.DATABASE_URL.startswith("sqlite"):
+    engine_kwargs.update(
+        {
+            "pool_pre_ping": True,
+            "pool_size": 10,
+            "max_overflow": 20,
+        }
+    )
+
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args=connect_args,
-    pool_pre_ping=True if not settings.DATABASE_URL.startswith("sqlite") else False,
+    **engine_kwargs,
 )
 
 SessionLocal = sessionmaker(
@@ -29,5 +40,8 @@ def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

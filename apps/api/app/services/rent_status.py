@@ -1,18 +1,16 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
-from zoneinfo import ZoneInfo
 
 try:
+    from zoneinfo import ZoneInfo
     IST = ZoneInfo("Asia/Kolkata")
 except Exception:
-    IST = None
+    IST = timezone(timedelta(hours=5, minutes=30))
 
 
 def get_today_ist() -> date:
     """Get current calendar date in Indian Standard Time (IST)."""
-    if IST:
-        return datetime.now(IST).date()
-    return datetime.utcnow().date()
+    return datetime.now(IST).date()
 
 
 def calculate_rent_status(
