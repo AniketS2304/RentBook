@@ -61,6 +61,30 @@ class RentRecordRepository:
         )
         return db.scalar(stmt)
 
+    def get_records_by_tenants_month_year(
+        self,
+        db: Session,
+        tenant_ids: List[UUID],
+        month: int,
+        year: int,
+    ) -> dict[UUID, RentRecord]:
+        """Fetch rent records for multiple tenants in a specific month/year with payments eager-loaded."""
+        if not tenant_ids:
+            return {}
+        stmt = (
+            select(RentRecord)
+            .options(
+                joinedload(RentRecord.payments),
+            )
+            .where(
+                RentRecord.tenant_id.in_(tenant_ids),
+                RentRecord.month == month,
+                RentRecord.year == year,
+            )
+        )
+        records = db.scalars(stmt).unique().all()
+        return {r.tenant_id: r for r in records}
+
     def list_by_month(
         self,
         db: Session,

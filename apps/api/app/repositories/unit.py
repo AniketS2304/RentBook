@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.property import Property
 from app.models.unit import Unit
@@ -16,10 +16,11 @@ class UnitRepository:
         unit_id: UUID,
         owner_id: UUID,
     ) -> Optional[Unit]:
-        """Fetch unit by ID, verifying property belongs to authenticated owner."""
+        """Fetch unit by ID with eager loaded tenants, verifying property belongs to authenticated owner."""
         stmt = (
             select(Unit)
             .join(Property, Unit.property_id == Property.id)
+            .options(selectinload(Unit.tenants))
             .where(
                 Unit.id == unit_id,
                 Property.owner_id == owner_id,
@@ -48,10 +49,11 @@ class UnitRepository:
         owner_id: UUID,
         include_archived: bool = False,
     ) -> List[Unit]:
-        """List all units for a property owned by the authenticated owner."""
+        """List all units with eager loaded tenants for a property owned by the authenticated owner."""
         stmt = (
             select(Unit)
             .join(Property, Unit.property_id == Property.id)
+            .options(selectinload(Unit.tenants))
             .where(
                 Unit.property_id == property_id,
                 Property.owner_id == owner_id,

@@ -3,6 +3,7 @@ from datetime import date
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.exceptions import AppException, NotFoundError
@@ -137,6 +138,8 @@ class RentService:
 
         units = list(db.scalars(stmt).unique().all())
 
+        # 1. Fetch eligible tenants and their units
+        eligible_items = []
         for unit in units:
             for tenant in unit.tenants:
                 # Eligibility check per BR-RENT-03 & ADR-002:
@@ -149,21 +152,51 @@ class RentService:
                     if tenant.move_out_date is None or tenant.move_out_date < month_start:
                         continue
 
-                # 3. Check if rent record already exists (avoid duplicates per EC-05 and ADR-002)
-                existing = rent_repo.get_by_tenant_month_year(db, tenant_id=tenant.id, month=month, year=year)
-                if existing is None:
-                    # Snapshot the unit's current monthly rent and compute due date
-                    due_day = min(unit.rent_due_day, last_day)
-                    due_date = date(year, month, due_day)
-                    rent_repo.create(
-                        db=db,
+                eligible_items.append((tenant, unit))
+
+        # 2. Fetch all existing rent records for eligible tenant IDs + month/year in a single batch query
+        eligible_tenant_ids = [t.id for t, _ in eligible_items]
+        existing_records_map = (
+            rent_repo.get_records_by_tenants_month_year(
+                db, tenant_ids=eligible_tenant_ids, month=month, year=year
+            )
+            if eligible_tenant_ids
+            else {}
+        )
+
+        # 3. Build only missing records
+        new_records = []
+        for tenant, unit in eligible_items:
+            if tenant.id not in existing_records_map:
+                due_day = min(unit.rent_due_day, last_day)
+                due_date = date(year, month, due_day)
+                new_records.append(
+                    RentRecord(
                         tenant_id=tenant.id,
                         unit_id=unit.id,
                         month=month,
                         year=year,
                         expected_amount_paise=unit.monthly_rent_paise,
                         due_date=due_date,
+                        is_void=False,
                     )
+                )
+
+        # 4. Commit missing records in one transaction with concurrency protection
+        if new_records:
+            try:
+                db.add_all(new_records)
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+                for record in new_records:
+                    try:
+                        with db.begin_nested():
+                            db.add(record)
+                            db.flush()
+                        db.commit()
+                    except IntegrityError:
+                        db.rollback()
 
         # Return all non-void records for this month
         return rent_repo.list_by_month(

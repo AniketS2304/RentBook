@@ -1,9 +1,10 @@
-from typing import Optional, Tuple, List
+from typing import List, Optional, Tuple
 from uuid import UUID
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.property import Property
+from app.models.unit import Unit
 
 
 class PropertyRepository:
@@ -15,10 +16,16 @@ class PropertyRepository:
         property_id: UUID,
         owner_id: UUID,
     ) -> Optional[Property]:
-        """Fetch property by ID, strictly enforcing owner_id."""
-        stmt = select(Property).where(
-            Property.id == property_id,
-            Property.owner_id == owner_id,
+        """Fetch property by ID, strictly enforcing owner_id with eager loading for units/tenants."""
+        stmt = (
+            select(Property)
+            .options(
+                selectinload(Property.units).selectinload(Unit.tenants)
+            )
+            .where(
+                Property.id == property_id,
+                Property.owner_id == owner_id,
+            )
         )
         return db.scalar(stmt)
 
@@ -44,7 +51,7 @@ class PropertyRepository:
         skip: int = 0,
         limit: int = 20,
     ) -> Tuple[List[Property], int]:
-        """List properties belonging to owner with pagination and optional archive filter."""
+        """List properties belonging to owner with pagination and eager loading."""
         base_stmt = select(Property).where(Property.owner_id == owner_id)
         if not include_archived:
             base_stmt = base_stmt.where(Property.archived_at.is_(None))
@@ -53,9 +60,12 @@ class PropertyRepository:
         count_stmt = select(func.count()).select_from(base_stmt.subquery())
         total = db.scalar(count_stmt) or 0
 
-        # Items paginated
+        # Items paginated with eager loaded units and tenants
         query_stmt = (
-            base_stmt.order_by(Property.created_at.desc())
+            base_stmt.options(
+                selectinload(Property.units).selectinload(Unit.tenants)
+            )
+            .order_by(Property.created_at.desc())
             .offset(skip)
             .limit(limit)
         )

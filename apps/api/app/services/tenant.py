@@ -184,10 +184,17 @@ class TenantService:
         )
 
         today = get_today_ist()
+        tenant_ids = [t.id for t in tenants]
+        rent_records_map = (
+            rent_repo.get_records_by_tenants_month_year(db, tenant_ids=tenant_ids, month=today.month, year=today.year)
+            if tenant_ids
+            else {}
+        )
+
         items = []
         for t in tenants:
-            # Check if non-void rent record exists for current month
-            current_rr = rent_repo.get_by_tenant_month_year(db, tenant_id=t.id, month=today.month, year=today.year)
+            # Check if non-void rent record exists for current month from batch lookup
+            current_rr = rent_records_map.get(t.id)
             current_month_status = None
             if current_rr and not current_rr.is_void:
                 current_rr_paid = sum(p.amount_paise for p in current_rr.payments if not p.is_void)
