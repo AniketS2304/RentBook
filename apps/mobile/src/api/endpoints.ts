@@ -59,20 +59,22 @@ export function createApiServices(client: ApiClient = defaultClient) {
       create: (data: PropertyCreate) =>
         client.post<PropertyDetail>('/properties', data),
       update: (id: string, data: PropertyUpdate) =>
-        client.put<PropertyDetail>(`/properties/${id}`, data),
+        client.patch<PropertyDetail>(`/properties/${id}`, data),
       archive: (id: string) =>
-        client.post<PropertyArchiveResponse>(`/properties/${id}/archive`),
+        client.delete<PropertyArchiveResponse>(`/properties/${id}`),
     },
 
     units: {
+      list: (propertyId: string, params?: { include_archived?: boolean }) =>
+        client.get<UnitOut[]>(`/properties/${propertyId}/units`, params),
       create: (propertyId: string, data: UnitCreate) =>
         client.post<UnitOut>(`/properties/${propertyId}/units`, data),
       get: (id: string) =>
         client.get<UnitOut>(`/units/${id}`),
       update: (id: string, data: UnitUpdate) =>
-        client.put<UnitOut>(`/units/${id}`, data),
+        client.patch<UnitOut>(`/units/${id}`, data),
       archive: (id: string) =>
-        client.post<UnitArchiveResponse>(`/units/${id}/archive`),
+        client.delete<UnitArchiveResponse>(`/units/${id}`),
     },
 
     tenants: {

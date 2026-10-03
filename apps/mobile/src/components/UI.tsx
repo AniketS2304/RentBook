@@ -2,11 +2,16 @@ import React from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ViewStyle,
   TextStyle,
   ActivityIndicator,
+  Modal as RNModal,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 // ==========================================
@@ -37,7 +42,7 @@ export const Badge: React.FC<BadgeProps> = ({ status, label, style }) => {
   let color = '#475569';
   let border = '#cbd5e1';
 
-  if (normalized === 'PAID') {
+  if (normalized === 'PAID' || normalized === 'OCCUPIED') {
     bg = '#dcfce7';
     color = '#15803d';
     border = '#bbf7d0';
@@ -53,10 +58,14 @@ export const Badge: React.FC<BadgeProps> = ({ status, label, style }) => {
     bg = '#e0f2fe';
     color = '#0369a1';
     border = '#bae6fd';
-  } else if (normalized === 'PENDING') {
+  } else if (normalized === 'PENDING' || normalized === 'VACANT') {
     bg = '#f8fafc';
     color = '#64748b';
     border = '#e2e8f0';
+  } else if (normalized === 'FLAT' || normalized === 'ROOM' || normalized === 'SHOP' || normalized === 'OTHER') {
+    bg = '#f1f5f9';
+    color = '#334155';
+    border = '#cbd5e1';
   }
 
   return (
@@ -138,6 +147,152 @@ export const Button: React.FC<ButtonProps> = ({
     </TouchableOpacity>
   );
 };
+
+// ==========================================
+// Form Input
+// ==========================================
+export interface InputProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  error?: string | null;
+  helperText?: string;
+  keyboardType?: 'default' | 'numeric' | 'phone-pad' | 'email-address';
+  maxLength?: number;
+  multiline?: boolean;
+  numberOfLines?: number;
+}
+
+export const Input: React.FC<InputProps> = ({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  error,
+  helperText,
+  keyboardType = 'default',
+  maxLength,
+  multiline,
+  numberOfLines,
+}) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <TextInput
+      style={[
+        styles.textInput,
+        Boolean(error) && styles.textInputError,
+        multiline && { height: 70, textAlignVertical: 'top' },
+      ]}
+      value={value}
+      onChangeText={onChangeText}
+      placeholder={placeholder}
+      placeholderTextColor="#94a3b8"
+      keyboardType={keyboardType}
+      maxLength={maxLength}
+      multiline={multiline}
+      numberOfLines={numberOfLines}
+    />
+    {error ? (
+      <Text style={styles.inputErrorText}>{error}</Text>
+    ) : helperText ? (
+      <Text style={styles.inputHelperText}>{helperText}</Text>
+    ) : null}
+  </View>
+);
+
+// ==========================================
+// Modal
+// ==========================================
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  return (
+    <RNModal
+      visible={isOpen}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalOverlay}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={onClose}
+        />
+        <View style={styles.modalSheet}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{title}</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.modalBody}
+          >
+            {children}
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </RNModal>
+  );
+};
+
+// ==========================================
+// Confirm Dialog
+// ==========================================
+export interface ConfirmDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  isDanger?: boolean;
+  loading?: boolean;
+}
+
+export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  isDanger = true,
+  loading = false,
+}) => (
+  <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Text style={styles.confirmMessage}>{message}</Text>
+    <View style={styles.confirmActions}>
+      <Button
+        title={cancelText}
+        variant="secondary"
+        onPress={onClose}
+        disabled={loading}
+        style={{ flex: 1 }}
+      />
+      <Button
+        title={confirmText}
+        variant={isDanger ? 'danger' : 'primary'}
+        onPress={onConfirm}
+        loading={loading}
+        style={{ flex: 1 }}
+      />
+    </View>
+  </Modal>
+);
 
 // ==========================================
 // Skeleton Placeholder
@@ -246,6 +401,92 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: 'bold',
+  },
+  inputContainer: {
+    marginBottom: 14,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 4,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#0f172a',
+    backgroundColor: '#ffffff',
+  },
+  textInputError: {
+    borderColor: '#dc2626',
+  },
+  inputErrorText: {
+    fontSize: 12,
+    color: '#dc2626',
+    marginTop: 4,
+  },
+  inputHelperText: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    flex: 1,
+  },
+  modalSheet: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0f172a',
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  closeBtnText: {
+    fontSize: 18,
+    color: '#64748b',
+  },
+  modalBody: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  confirmMessage: {
+    fontSize: 14,
+    color: '#475569',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: 10,
   },
   skeleton: {
     backgroundColor: '#f1f5f9',

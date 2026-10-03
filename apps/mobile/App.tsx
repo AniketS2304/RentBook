@@ -13,8 +13,8 @@ import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { DashboardScreen } from './src/screens/DashboardScreen';
+import { PropertiesScreen } from './src/screens/PropertiesScreen';
 import {
-  PropertiesScreen,
   TenantsScreen,
   RentScreen,
   PaymentsScreen,
